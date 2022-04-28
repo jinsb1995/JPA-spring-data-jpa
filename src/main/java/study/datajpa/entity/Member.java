@@ -12,6 +12,7 @@ import javax.persistence.*;
         name = "Member.findByUsername",
         query = "select m from Member m where m.username = :username"
 )
+@NamedEntityGraph(name = "Member.All", attributeNodes = @NamedAttributeNode("team"))  // @EntityGraph("Member.ALl") 이렇게 사용하면 된다.
 public class Member {
 
     @Id @GeneratedValue

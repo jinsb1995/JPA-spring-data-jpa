@@ -13,6 +13,8 @@ import study.datajpa.dto.MemberDTO;
 import study.datajpa.entity.Member;
 import study.datajpa.entity.Team;
 
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -39,6 +41,7 @@ public class MemberRepositoryTest {
     // spring data jpa가 인터페이스를 보고, 구현 클래스를 지가 만들어서 꽂아버린것이다.
     @Autowired MemberRepository memberRepository;
     @Autowired TeamRepository teamRepository;
+    @PersistenceContext EntityManager em;
 
 
 
@@ -268,8 +271,6 @@ public class MemberRepositoryTest {
         // 내부에 있는걸 다른걸로 바꿔서 반환하는 것
         Page<MemberDTO> map = page.map(member -> new MemberDTO(member.getId(), member.getUsername(), null));
 
-
-
         // then
         List<Member> content = page.getContent();
 
@@ -291,9 +292,124 @@ public class MemberRepositoryTest {
 
 
 
+    @Test
+    public void bulkUpdate() throws Exception {
+        // given
+        memberRepository.save(new Member("member1", 10));
+        memberRepository.save(new Member("member2", 19));
+        memberRepository.save(new Member("member3", 20));
+        memberRepository.save(new Member("member4", 21));
+        memberRepository.save(new Member("member5", 40));
+
+
+        // when
+        // 1. 이렇게 벌크 연산으로 DB에 바로 때려버리면
+        int resultCount = memberRepository.bulkAgePlus(20);
+
+
+        // 아직 남아있는 변경되지 않은 내용이 DB에 반영이 되는것이다.
+//        em.flush();
+//        // 영속성 컨텍스트를 비워준다.
+//        em.clear();
 
 
 
+        // 2. 여기서 조회할떄는 영속성 컨텍스트에서 가져오기때문에 아직 반영이 안된 상태이다.
+        List<Member> result = memberRepository.findByUsername("member5");
+        Member member = result.get(0);
+
+        System.out.println("member = " + member);
+
+        // then
+        assertThat(resultCount).isEqualTo(3);
+
+    }
+
+
+
+
+
+    @Test
+    public void findMemberLazy() throws Exception {
+        // given
+        // member1 -> teamA 참조
+        // member2 -> teamB 참조
+
+        Team teamA = new Team("teamA");
+        Team teamB = new Team("teamB");
+        teamRepository.save(teamA);
+        teamRepository.save(teamB);
+
+        Member member1 = new Member("member1", 10, teamA);
+        Member member2 = new Member("member2", 10, teamB);
+        memberRepository.save(member1);
+        memberRepository.save(member2);
+
+
+        em.flush();
+        em.clear();
+
+
+        // when N(result = 2) + 1
+        // select Member 1
+        List<Member> members = memberRepository.findEntityGraphByUsername("member1");
+
+        for (Member member : members) {
+            System.out.println("member = " + member.getUsername());
+            // select Team
+            System.out.println("member.getTeam().getName() = " + member.getTeam().getName());
+            System.out.println("member.getTeam().getClass() = " + member.getTeam().getClass());
+        }
+
+
+        // then
+
+    }
+
+
+
+
+
+
+    // Hint
+    @Test
+    public void queryHint() throws Exception {
+        // given
+        // jpa는 readonly라는 기능이 있다.
+        Member member1 = new Member("member1", 10);
+        memberRepository.save(member1);
+        em.flush();
+        em.clear();
+
+        //when
+        Member findMember = memberRepository.findReadOnlyByUsername("member1");
+        findMember.setUsername("member2");
+
+        em.flush();
+
+    }
+    
+    
+    
+    @Test
+    public void lock() {
+        //given
+        Member member = new Member("member1", 10);
+        memberRepository.save(member);
+        em.flush();
+        em.clear();
+        
+        //when
+        List<Member> result = memberRepository.findLockByUsername("member1");
+    }
+    
+    
+    
+    // 사용자 정의 Repository
+    @Test
+    public void callCustom() {
+        List<Member> memberCustom = memberRepository.findMemberCustom();
+    }
 
 
 

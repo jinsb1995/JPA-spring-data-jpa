@@ -2,12 +2,13 @@ package study.datajpa.repository;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
 import study.datajpa.dto.MemberDTO;
 import study.datajpa.entity.Member;
 
+import javax.persistence.LockModeType;
+import javax.persistence.QueryHint;
 import java.util.List;
 import java.util.Optional;
 
@@ -17,7 +18,7 @@ import java.util.Optional;
     spring data jpa가 인터페이스를 보고, 구현 클래스를 지가 만들어서 꽂아버린것이다.
     JpaRepository의 <엔티티타입, PK타입> 이 중요하다.
  */
-public interface MemberRepository extends JpaRepository<Member, Long> {
+public interface MemberRepository extends JpaRepository<Member, Long>, MemberRepositoryCustom {
 
     List<Member> findByUsernameAndAgeGreaterThan(String username, int age);
 
@@ -68,6 +69,50 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
     @Query(value = "select m from Member m"
             /*, countQuery = "select count(m) from Member m"*/)
     Page<Member> findByAge(int age, Pageable pageable);
+
+
+    // bulkUpdate,  @Modifying이 없으면 getSingleResult()가 호출된다.
+    // 벌크 연산은 영속성 컨텍스트에서 관리하는걸 무시하고 바로 DB에 때려버린다.
+    //
+    @Modifying(clearAutomatically = true)   // 쿼리가 나가고 난 다음에 em.clear()를 호출해준다.
+    @Query("update Member m set m.age = m.age + 1 where m.age >= :age")
+    int bulkAgePlus(@Param("age") int age);
+
+
+
+
+
+    // fetch join
+    @Query("select m from Member m left join fetch m.team")
+    List<Member> findMemberByJoin();
+
+    @Override
+    @EntityGraph(attributePaths = {"team"})  // @EntityGraph는 그냥 fetch join이라고 생각하자
+    List<Member> findAll();  // 지연로딩이라서 Member만 조회가 될텐데 @EntityGraph를 사용하면 연관관계 엔티티도 한방 쿼리로 가져온다.
+
+
+    @EntityGraph(attributePaths = {"team"})
+    @Query("select m from Member m")
+    List<Member> findMemberEntityGraph();
+
+
+    @EntityGraph(attributePaths = {"team"})
+    List<Member> findEntityGraphByUsername(@Param("username") String username);
+
+
+
+
+    // Hint - 영속성 컨텍스트는 dirty checking때문에 findById를 해도 수정할 수 있게 원본과 snapshot을 갖고있는데 이게 비효율적이다.
+    // 변경감지를 위한 snapshot
+    // 그래서 이렇게 힌트를 작성하면 조회한 원본만 가지고 있을 수 있기 때문에 수정본을 가지고 있을 비용을 줄일 수 있다.
+    @QueryHints(value = @QueryHint(name = "org.hibernate.readOnly", value = "true"))
+    Member findReadOnlyByUsername(String username);
+
+
+
+    // lock
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    List<Member> findLockByUsername(String username);
 
 
 }
