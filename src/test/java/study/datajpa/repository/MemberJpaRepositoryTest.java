@@ -105,6 +105,58 @@ class MemberJpaRepositoryTest {
 
 
 
+    @Test
+    public void testNamedQuery() {
+        Member m1 = new Member("AAA", 10);
+        Member m2 = new Member("BBB", 20);
+        memberJpaRepository.save(m1);
+        memberJpaRepository.save(m2);
+
+
+        List<Member> result = memberJpaRepository.findByUsername("AAA");
+        Member findMember = result.get(0);
+        assertThat(findMember).isEqualTo(m1);
+
+    }
+
+
+
+
+    @Test
+    public void paging() {
+        // given
+
+        for (int i = 0; i < 100; i++) {
+            memberJpaRepository.save(new Member("member" + i, 10));
+        }
+
+
+        int age = 10;
+        int offset = 22;
+        int limit = 10;
+
+
+        // when
+        List<Member> members = memberJpaRepository.findByPage(age, offset, limit);
+        long totalCount = memberJpaRepository.totalCount(age);
+
+        // 페이지 계산 공식 적용
+        // toalPage = totalCount / size ...
+        // 마지막 페이지 ...
+        // 최초 페이지 ...
+
+
+        // then
+//        assertThat(members.size()).isEqualTo(3);
+//        assertThat(totalCount).isEqualTo(5);
+
+        for (Member member : members) {
+            System.out.println("member.getId() = " + member.getId());
+        }
+
+    }
+
+
 
 
 }
