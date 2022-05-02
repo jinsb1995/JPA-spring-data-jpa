@@ -73,7 +73,6 @@ public interface MemberRepository extends JpaRepository<Member, Long>, MemberRep
 
     // bulkUpdate,  @Modifying이 없으면 getSingleResult()가 호출된다.
     // 벌크 연산은 영속성 컨텍스트에서 관리하는걸 무시하고 바로 DB에 때려버린다.
-    //
     @Modifying(clearAutomatically = true)   // 쿼리가 나가고 난 다음에 em.clear()를 호출해준다.
     @Query("update Member m set m.age = m.age + 1 where m.age >= :age")
     int bulkAgePlus(@Param("age") int age);
@@ -118,6 +117,27 @@ public interface MemberRepository extends JpaRepository<Member, Long>, MemberRep
 
     // specification (명세) == criteria
 
+
+
+    // Projections
+    List<UsernameOnlyDTO> findProjectionsByUsername(@Param("username") String username);
+
+
+    // 동적 Projections
+    <T> List<T> findProjectionsByUsername(@Param("username") String username, Class<T> type);
+
+
+
+
+    // 네이티브 쿼리
+    @Query(value = "select * from member where username = ?", nativeQuery = true)
+    Member findByNativeQuery(String username);
+
+
+
+    // Native Projection
+    @Query(value = "select m.member_id as id, m.username, t.name as teamName from member m left join team t", countQuery = "select count(*) from member", nativeQuery = true)
+    Page<MemberProjection> findByNativeProjection(Pageable pageable);
 
 
 
