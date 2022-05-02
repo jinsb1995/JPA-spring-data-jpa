@@ -81,10 +81,10 @@ class MemberTest {
 
 
         // then
-        System.out.println("findMember.getCreatedDate()      = " + findMember.getCreatedDate());
-        System.out.println("findMember.getLastModifiedDate() = " + findMember.getLastModifiedDate());
-        System.out.println("findMember.getCreateBy()         = " + findMember.getCreateBy());
-        System.out.println("findMember.getLastModifiedBy()   = " + findMember.getLastModifiedBy());
+//        System.out.println("findMember.getCreatedDate()      = " + findMember.getCreatedDate());
+//        System.out.println("findMember.getLastModifiedDate() = " + findMember.getLastModifiedDate());
+//        System.out.println("findMember.getCreateBy()         = " + findMember.getCreateBy());
+//        System.out.println("findMember.getLastModifiedBy()   = " + findMember.getLastModifiedBy());
         
         
         

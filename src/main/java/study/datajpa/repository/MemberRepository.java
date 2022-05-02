@@ -18,7 +18,7 @@ import java.util.Optional;
     spring data jpa가 인터페이스를 보고, 구현 클래스를 지가 만들어서 꽂아버린것이다.
     JpaRepository의 <엔티티타입, PK타입> 이 중요하다.
  */
-public interface MemberRepository extends JpaRepository<Member, Long>, MemberRepositoryCustom {
+public interface MemberRepository extends JpaRepository<Member, Long>, MemberRepositoryCustom, JpaSpecificationExecutor<Member> {
 
     List<Member> findByUsernameAndAgeGreaterThan(String username, int age);
 
@@ -113,6 +113,12 @@ public interface MemberRepository extends JpaRepository<Member, Long>, MemberRep
     // lock
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     List<Member> findLockByUsername(String username);
+
+
+
+    // specification (명세) == criteria
+
+
 
 
 }
